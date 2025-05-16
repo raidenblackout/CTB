@@ -11,7 +11,7 @@ class BaseNewsSource(ABC):
         self.logger = logger # Use shared logger
 
     @abstractmethod
-    def fetch_news(self, target_coins_keywords: Dict[str, List[str]]) -> List[Article]:
+    def fetch_news(self, target_coins_keywords: Dict[str, List[str]], limit: Optional[int] = 10) -> List[Article]:
         """
         Fetches news articles relevant to the target_coins.
         target_coins_keywords: A dictionary like {"BTC": ["Bitcoin", "BTC"], "ETH": ["Ethereum"]}

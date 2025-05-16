@@ -57,3 +57,48 @@ class BaseMarketDataSource(ABC):
             self.logger.info(f"  Fetch Trades: {self.client.has.get('fetchTrades')}")
         else:
             self.logger.warning(f"Cannot determine capabilities for {self.exchange_name} client (no 'has' attribute).")
+
+    @abstractmethod
+    def place_order(self, symbol: str, order_type: str, side: str, amount: float, price: Optional[float] = None) -> Dict[str, Any]:
+        """Places an order on the exchange."""
+        pass
+
+    @abstractmethod
+    def cancel_order(self, order_id: str, symbol: Optional[str] = None) -> bool:
+        """Cancels an open order."""
+        pass
+
+    @abstractmethod
+    def get_order_status(self, order_id: str, symbol: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Fetches the status of a specific order."""
+        pass
+
+    @abstractmethod
+    def get_open_orders(self, symbol: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Fetches all open orders, optionally filtered by symbol."""
+        pass
+
+    @abstractmethod
+    def get_account_balance(self) -> Dict[str, float]:
+        """Fetches the current account balance from the exchange."""
+        pass
+
+    @abstractmethod
+    def get_current_price(self, symbol: str) -> Optional[float]:
+        """Fetches the current price for a symbol."""
+        pass
+
+    @abstractmethod
+    def get_historical_data(self, symbol: str, timeframe: str, since: Optional[int] = None, limit: Optional[int] = None) -> List[OHLCV]:
+        """Fetches historical data for a symbol."""
+        pass
+
+    @abstractmethod
+    def get_symbol_info(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """Fetches detailed information about a specific symbol."""
+        pass
+
+    @abstractmethod
+    def get_all_symbols(self) -> List[str]:
+        """Fetches all available trading symbols on the exchange."""
+        pass

@@ -37,7 +37,7 @@ class BinanceSource(BaseMarketDataSource):
             if not exchange_params['secret']: del exchange_params['secret']
 
             client = ccxt.binance()
-            # client.set_sandbox_mode(True) # For testing with Binance testnet
+            client.set_sandbox_mode(True) # For testing with Binance testnet
             self.logger.info("CCXT Binance client initialized successfully.")
             return client
         except Exception as e:
@@ -174,3 +174,152 @@ class BinanceSource(BaseMarketDataSource):
         except Exception as e:
             self.logger.error(f"Error fetching trades for {symbol}: {e}", exc_info=True)
         return []
+    
+    def place_order(self, symbol, order_type, side, amount, price=None, params=None):
+        """
+        Places an order on Binance.
+        :param symbol: Trading pair symbol (e.g., 'BTC/USDT')
+        :param order_type: 'limit' or 'market'
+        :param side: 'buy' or 'sell'
+        :param amount: Amount to buy/sell
+        :param price: Price for limit orders
+        :param params: Additional params for CCXT
+        :return: Order info dict or None
+        """
+        try:
+            self.logger.debug(f"Placing {order_type} {side} order for {amount} {symbol} at {price}")
+            if order_type == 'limit':
+                order = self.client.create_order(symbol, order_type, side, amount, price, params or {})
+            else:
+                order = self.client.create_order(symbol, order_type, side, amount, None, params or {})
+            return order
+        except Exception as e:
+            self.logger.error(f"Error placing order: {e}", exc_info=True)
+            return None
+
+    def cancel_order(self, order_id, symbol=None, params=None):
+        """
+        Cancels an order by order_id and symbol.
+        :param order_id: The order ID to cancel
+        :param symbol: Trading pair symbol (required by Binance)
+        :param params: Additional params for CCXT
+        :return: Cancel result dict or None
+        """
+        try:
+            if not symbol:
+                raise ValueError("Symbol is required to cancel an order on Binance.")
+            self.logger.debug(f"Cancelling order {order_id} for {symbol}")
+            result = self.client.cancel_order(order_id, symbol, params or {})
+            return result
+        except Exception as e:
+            self.logger.error(f"Error cancelling order: {e}", exc_info=True)
+            return None
+
+    def get_order_status(self, order_id, symbol=None, params=None):
+        """
+        Gets the status of an order.
+        :param order_id: The order ID
+        :param symbol: Trading pair symbol (required by Binance)
+        :param params: Additional params for CCXT
+        :return: Order status dict or None
+        """
+        try:
+            if not symbol:
+                raise ValueError("Symbol is required to get order status on Binance.")
+            self.logger.debug(f"Fetching order status for {order_id} on {symbol}")
+            order = self.client.fetch_order(order_id, symbol, params or {})
+            return order
+        except Exception as e:
+            self.logger.error(f"Error fetching order status: {e}", exc_info=True)
+            return None
+
+    def get_open_orders(self, symbol=None, params=None):
+        """
+        Gets open orders for a symbol or all symbols.
+        :param symbol: Trading pair symbol or None for all
+        :param params: Additional params for CCXT
+        :return: List of open orders
+        """
+        try:
+            self.logger.debug(f"Fetching open orders for {symbol if symbol else 'all symbols'}")
+            orders = self.client.fetch_open_orders(symbol, params or {}) if symbol else self.client.fetch_open_orders(None, params or {})
+            return orders
+        except Exception as e:
+            self.logger.error(f"Error fetching open orders: {e}", exc_info=True)
+            return []
+
+    def get_account_balance(self, params=None):
+        """
+        Gets account balances.
+        :param params: Additional params for CCXT
+        :return: Balance dict or None
+        """
+        try:
+            self.logger.debug("Fetching account balance")
+            balance = self.client.fetch_balance(params or {})
+            return balance
+        except Exception as e:
+            self.logger.error(f"Error fetching account balance: {e}", exc_info=True)
+            return None
+
+    def get_current_price(self, symbol, params=None):
+        """
+        Gets the current price for a symbol.
+        :param symbol: Trading pair symbol
+        :param params: Additional params for CCXT
+        :return: Price (float) or None
+        """
+        try:
+            self.logger.info(f"Fetching current price for {symbol}")
+            ticker = self.client.fetch_ticker(symbol, params or {})
+            return ticker.get('last')
+        except Exception as e:
+            self.logger.error(f"Error fetching current price: {e}", exc_info=True)
+            return None
+
+    def get_historical_data(self, symbol, timeframe, since=None, limit=None, params=None):
+        """
+        Gets historical OHLCV data.
+        :param symbol: Trading pair symbol
+        :param timeframe: Timeframe string (e.g., '1m', '1h')
+        :param since: Timestamp in ms
+        :param limit: Number of candles
+        :param params: Additional params for CCXT
+        :return: List of OHLCV data
+        """
+        try:
+            self.logger.debug(f"Fetching historical data for {symbol} timeframe {timeframe}")
+            ohlcv = self.client.fetch_ohlcv(symbol, timeframe, since, limit, params or {})
+            return ccxt_ohlcv_to_pydantic(ohlcv, symbol, timeframe)
+        except Exception as e:
+            self.logger.error(f"Error fetching historical data: {e}", exc_info=True)
+            return []
+
+    def get_symbol_info(self, symbol, params=None):
+        """
+        Gets info for a specific symbol.
+        :param symbol: Trading pair symbol
+        :param params: Additional params for CCXT
+        :return: Symbol info dict or None
+        """
+        try:
+            self.logger.debug(f"Fetching symbol info for {symbol}")
+            markets = self.client.load_markets(params or {})
+            return markets.get(symbol)
+        except Exception as e:
+            self.logger.error(f"Error fetching symbol info: {e}", exc_info=True)
+            return None
+
+    def get_all_symbols(self, params=None):
+        """
+        Gets all available trading symbols.
+        :param params: Additional params for CCXT
+        :return: List of symbol strings
+        """
+        try:
+            self.logger.debug("Fetching all available symbols")
+            markets = self.client.load_markets(params or {})
+            return list(markets.keys())
+        except Exception as e:
+            self.logger.error(f"Error fetching all symbols: {e}", exc_info=True)
+            return []

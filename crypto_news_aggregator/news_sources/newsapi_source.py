@@ -1,6 +1,6 @@
 # crypto_news_aggregator/news_sources/newsapi_source.py
 import requests
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 from .base_source import BaseNewsSource
 from ..utils.data_models import Article
@@ -17,7 +17,7 @@ class NewsApiSource(BaseNewsSource):
         else:
             self.api_key = config.NEWSAPI_KEY
 
-    def fetch_news(self, target_coins_keywords: Dict[str, List[str]]) -> List[Article]:
+    def fetch_news(self, target_coins_keywords: Dict[str, List[str]], limit: Optional[int] = 10) -> List[Article]:
         if not self.api_key:
             return []
 

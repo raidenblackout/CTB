@@ -1,6 +1,6 @@
 # crypto_news_aggregator/news_sources/rss_source.py
 import feedparser
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 from .base_source import BaseNewsSource
 from ..utils.data_models import Article
@@ -20,7 +20,7 @@ class RSSSource(BaseNewsSource):
         return datetime.now()
 
 
-    def fetch_news(self, target_coins_keywords: Dict[str, List[str]]) -> List[Article]:
+    def fetch_news(self, target_coins_keywords: Dict[str, List[str]], limit: Optional[int] = 10) -> List[Article]:
         self.logger.info(f"Fetching news from RSS feed: {self.source_name} ({self.feed_url})")
         articles: List[Article] = []
         try:

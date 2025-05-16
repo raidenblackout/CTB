@@ -1,7 +1,7 @@
 # crypto_news_aggregator/news_sources/cryptopanic_source.py
 from datetime import datetime
 import requests
-from typing import List, Dict
+from typing import List, Dict, Optional
 from .base_source import BaseNewsSource
 from ..utils.data_models import Article
 from .. import config # For API key and settings
@@ -34,7 +34,7 @@ class CryptoPanicSource(BaseNewsSource):
         return list(set(found_tickers)) # Unique list
 
 
-    def fetch_news(self, target_coins_keywords: Dict[str, List[str]]) -> List[Article]:
+    def fetch_news(self, target_coins_keywords: Dict[str, List[str]], limit: Optional[int] = 10) -> List[Article]:
         if not self.api_key:
             return []
 
@@ -49,6 +49,7 @@ class CryptoPanicSource(BaseNewsSource):
             "auth_token": self.api_key,
             "public": "true", # Get publicly available posts
             "currencies": currency_tickers,
+            "page_size": limit if limit else 50, # Default to 50 if no limit provided
         }
         if config.CRYPTOPANIC_FILTER:
             params["filter"] = config.CRYPTOPANIC_FILTER

@@ -1,0 +1,72 @@
+# agent_config.yaml
+agent_settings:
+  portfolio_base_currency: USDT
+  initial_capital:
+    USDT: 20.0
+  trading_interval_seconds: 60
+  market_data_source_config:
+    type: BinanceSource # Or CCXTGeneralSource, etc.
+    api_key: YOUR_BINANCE_API_KEY_ENV_VAR_OR_VALUE # Use environment variables for secrets
+    secret_key: YOUR_BINANCE_SECRET_KEY_ENV_VAR_OR_VALUE
+    # extra_params: {"options": {"defaultType": "future"}} # if using ccxt futures
+  ollama_client_config:
+    host: http://localhost:11434
+    # model: "llama3:latest" # Default model if not specified in query
+  sentiment_analyzer_config:
+    model: llama3-instruct # Model for sentiment analysis
+    mode: ollama_direct # or "openai_compatible"
+    # prompt_template: "Analyze sentiment of this crypto news: '{text}'. Sentiment (POSITIVE/NEGATIVE/NEUTRAL) and score (-1.0 to 1.0):"
+  news_sources_config:
+    - type: RSSSource
+      name: CoinDesk RSS
+      url: https://www.coindesk.com/arc/outboundfeeds/rss/
+      max_articles_per_fetch: 15
+    - type: NewsApiSource # Assumes NewsApiSource class is defined
+      api_key: YOUR_NEWSAPI_KEY_ENV_VAR_OR_VALUE
+      query: "bitcoin OR ethereum OR cryptocurrency"
+      language: "en"
+      sort_by: "publishedAt"
+      max_articles_per_fetch: 20
+
+strategies:
+  - name: MACrossover_BTC_15m
+    module: agent.strategies.rule_based.moving_average_crossover
+    class_name: MovingAverageCrossoverStrategy
+    parameters:
+      symbol: BTC/USDT
+      short_window: 10
+      long_window: 30
+      timeframe: 1m # e.g., 1m, 5m, 15m, 1h, 4h, 1d
+      trade_quantity_percentage: 0.25 # 25% of available USDT for a BTC buy
+
+  - name: MACrossover_ETH_15m
+    module: agent.strategies.rule_based.moving_average_crossover
+    class_name: MovingAverageCrossoverStrategy
+    parameters:
+      symbol: ETH/USDT
+      short_window: 10
+      long_window: 30
+      timeframe: 1m # e.g., 1m, 5m, 15m, 1h, 4h, 1d
+      trade_quantity_percentage: 0.25 # 25% of available USDT for a BTC buy
+
+  - name: MACrossover_NXPC_15m
+    module: agent.strategies.rule_based.moving_average_crossover
+    class_name: MovingAverageCrossoverStrategy
+    parameters:
+      symbol: NXPC/USDT
+      short_window: 10
+      long_window: 30
+      timeframe: 1m # e.g., 1m, 5m, 15m, 1h, 4h, 1d
+      trade_quantity_percentage: 0.25 # 25% of available USDT for a BTC buy
+
+  - name: SentimentTrader_MajorCaps
+    module: agent.strategies.ai_based.sentiment_llm_strategy
+    class_name: SentimentLLMStrategy
+    parameters:
+      target_symbols: ["BTC", "ETH", "SOL", "NXPC", "DODGE"] # Base symbols
+      news_fetch_limit: 7 # Articles per source per symbol potentially
+      sentiment_threshold_buy: 0.25
+      sentiment_threshold_sell: -0.15
+      trade_quantity_percentage: 0.15 # 15% of quote currency per trade
+      quote_currency: USDT
+      news_max_age_hours: 8
