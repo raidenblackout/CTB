@@ -2,7 +2,7 @@ import time
 from api_client.OllamaClient import OllamaClient
 from sentiment_analysis.converters import sentiment_to_trading_signal
 from sentiment_analysis.sentiment_analyzer import SentimentAnalyzer
-from crypto_news_aggregator.main import get_top_recent_articles
+from crypto_news_aggregator.crypto_news_tools import get_top_recent_articles
 
 try:
     from openai import OpenAI
